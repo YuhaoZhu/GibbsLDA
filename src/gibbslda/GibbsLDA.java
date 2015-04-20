@@ -7,6 +7,7 @@ package gibbslda;
 
 import gibbslda.Documents.Document;
 import java.io.IOException;
+import java.sql.Timestamp;
 
 /**
  *
@@ -17,15 +18,23 @@ public class GibbsLDA {
     /**
      * @param args the command line arguments
      */
-    public static void main(String[] args) throws IOException  {
+    public static void main(String[] args) throws IOException {
         // TODO code application logic here
-        Documents docs=new Documents();
+        java.util.Date date= new java.util.Date();
+        Documents docs = new Documents();
         docs.readTrainingDocuments("/Users/YuhaoZhu/LDATraining/");
-        for (Document doc:docs.allDocumentsContent){
-            for (int i=0;i<doc.mappedDoc.length;i++){
-                System.out.println(doc.mappedDoc[i]);
-            }
-        }
+        
+        System.out.println(new Timestamp(date.getTime()));
+        System.out.println("Loading Modeling Parameters");
+        LDAModel ldaModel = new LDAModel(0.5, 0.5, 100, 10);
+        
+        System.out.println(new Timestamp(date.getTime()));
+        System.out.println("Initializing the Model");
+        ldaModel.init(docs);
+        
+        System.out.println(new Timestamp(date.getTime()));
+        System.out.println("Start Training Model");
+        ldaModel.trainingModel(docs,80);    
     }
     
 }
