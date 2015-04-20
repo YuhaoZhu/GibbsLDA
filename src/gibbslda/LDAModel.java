@@ -23,7 +23,7 @@ public class LDAModel {
     int[][] z;// z[n][m] the topic disturbation
 
     int[][] nmk;//given document m, count times of topic k. M*K  
-    int[][] nkt;//given topic k, count times of term t. K*V  
+    int[][] nkt;//given topic k, count times of word t. K*V  
     int[] nmkSum;//Sum for each row in nmk  
     int[] nktSum;//Sum for each row in nkt  
     double[][] phi;//Parameters for topic-word distribution K*V  
@@ -82,12 +82,13 @@ public class LDAModel {
 
     }
 
-    public void trainingModel(Documents docs, int saveAtIter) {
+    public void trainingModel(Documents docs, int saveAtIter,String modelPath) {
         java.util.Date date = new java.util.Date();
 
         for (int iter = 0; iter < iterations; iter++) {
-            System.out.print("Iterations: " + iter + " begins at");
-            System.out.println(new Timestamp(date.getTime()));
+            System.out.print(new Timestamp(date.getTime()));
+            System.out.println(" Iterations: " + iter);
+           
 
             //sampling a new topic to update z[][]
             for (int m = 0; m < M; m++) {
@@ -97,7 +98,19 @@ public class LDAModel {
                     z[m][j] = newTopic;
                 }
             }
+            
+            if (iter>=saveAtIter-1){
+                updatePara();
+                saveModel(iter+1,docs,modelPath);
+            }
         }
+        
+        updatePara();
+        saveModel(0,docs,modelPath);
+    }
+    
+    private void saveModel(int iter,Documents docs,String modelPath){
+        
     }
 
     private void updatePara() {

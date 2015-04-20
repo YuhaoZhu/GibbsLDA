@@ -20,21 +20,34 @@ public class GibbsLDA {
      */
     public static void main(String[] args) throws IOException {
         // TODO code application logic here
+        
+        String documentsPath=args[0];
+        String modelPath=args[1];
+        int iter=Integer.parseInt(args[2]);
+        int topicNum=Integer.parseInt(args[3]);
+        int saveAtiter=Integer.parseInt(args[4]);
+        
+        System.out.println("Documents Path is "+documentsPath);
+        System.out.println("Model Path is "+modelPath);
+        System.out.println("Iteration # is"+ iter);
+        System.out.println("Topic num is "+topicNum);
+        System.out.println("Model will be saved at iter #"+saveAtiter);
+        
         java.util.Date date= new java.util.Date();
         Documents docs = new Documents();
-        docs.readTrainingDocuments("/Users/YuhaoZhu/LDATraining/");
+        docs.readTrainingDocuments(documentsPath);
         
-        System.out.println(new Timestamp(date.getTime()));
+        //System.out.println(new Timestamp(date.getTime()));
         System.out.println("Loading Modeling Parameters");
         LDAModel ldaModel = new LDAModel(0.5, 0.5, 100, 10);
         
-        System.out.println(new Timestamp(date.getTime()));
-        System.out.println("Initializing the Model");
+        System.out.print(new Timestamp(date.getTime()));
+        System.out.println(" Initializing the Model");
         ldaModel.init(docs);
         
-        System.out.println(new Timestamp(date.getTime()));
-        System.out.println("Start Training Model");
-        ldaModel.trainingModel(docs,80);    
+        System.out.print(new Timestamp(date.getTime()));
+        System.out.println(" Start Training Model");
+        ldaModel.trainingModel(docs,saveAtiter,modelPath);    
     }
     
 }
