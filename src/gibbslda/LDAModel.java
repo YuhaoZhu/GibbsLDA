@@ -6,7 +6,14 @@
 package gibbslda;
 
 import gibbslda.Documents.Document;
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 
 /**
  *
@@ -82,13 +89,12 @@ public class LDAModel {
 
     }
 
-    public void trainingModel(Documents docs, int saveAtIter,String modelPath) {
+    public void trainingModel(Documents docs, int saveAtIter, String modelPath) throws IOException {
         java.util.Date date = new java.util.Date();
 
         for (int iter = 0; iter < iterations; iter++) {
             System.out.print(new Timestamp(date.getTime()));
             System.out.println(" Iterations: " + iter);
-           
 
             //sampling a new topic to update z[][]
             for (int m = 0; m < M; m++) {
@@ -98,19 +104,58 @@ public class LDAModel {
                     z[m][j] = newTopic;
                 }
             }
-            
-            if (iter>=saveAtIter-1){
+
+            if (iter >= saveAtIter - 1) {
                 updatePara();
-                saveModel(iter+1,docs,modelPath);
+                saveModel(iter + 1, docs, modelPath);
             }
         }
-        
+
         updatePara();
-        saveModel(0,docs,modelPath);
+        saveModel(0, docs, modelPath);
     }
-    
-    private void saveModel(int iter,Documents docs,String modelPath){
-        
+
+    private void saveModel(int iter, Documents docs, String modelPath) throws IOException {
+        String modelName = "LDA_" + iter;
+
+        //K*V
+        BufferedWriter writer = new BufferedWriter(new FileWriter(modelPath + modelName + ".phi"));
+        for (int k = 0; k < K; k++) {
+            for (int v = 0; v < V; v++) {
+                writer.write(phi[k][v] + "\t");
+            }
+            writer.write("\n");
+        }
+        writer.close();
+
+        //M*K
+        writer = new BufferedWriter(new FileWriter(modelPath + modelName + ".theta"));
+        for (int m = 0; m < M; m++) {
+            for (int k = 0; k < K; k++) {
+                writer.write(phi[k][m] + "\t");
+            }
+            writer.write("\n");
+        }
+        writer.close();
+
+    }
+
+    public void displayLDA(Documents docs, String modelPath, int topNum) throws IOException {
+        String modelName = "LDA";
+        BufferedWriter writer = new BufferedWriter(new FileWriter(modelPath + modelName + ".display"));
+        for (int i = 0; i < K; i++) {
+            List<Integer> indexToFeatureArray = new ArrayList<Integer>();
+            for (int j = 0; j < V; j++) {
+                indexToFeatureArray.add(new Integer(j));
+            }
+            Collections.sort(indexToFeatureArray, new LDAModel.tmpVar(phi[i]));
+            writer.write("topic " + i + "\t:\t");
+            for (int t = 0; t < topNum; t++) {
+                writer.write(docs.indexToFeatureMap.get(indexToFeatureArray.get(t)) + " " + phi[i][indexToFeatureArray.get(t)] + "\t");
+            }
+            writer.write("\n");
+        }
+        writer.close();
     }
 
     private void updatePara() {
@@ -157,5 +202,27 @@ public class LDAModel {
         nmkSum[m]++;
         nktSum[newTopic]++;
         return newTopic;
+    }
+
+    public class tmpVar implements Comparator<Integer> {
+
+        public double[] sortProb; // Store probability of each word in topic k  
+
+        public tmpVar(double[] sortProb) {
+            this.sortProb = sortProb;
+        }
+
+        @Override
+        public int compare(Integer o1, Integer o2) {
+            // TODO Auto-generated method stub  
+            //Sort topic word index according to the probability of each word in topic k  
+            if (sortProb[o1] > sortProb[o2]) {
+                return -1;
+            } else if (sortProb[o1] < sortProb[o2]) {
+                return 1;
+            } else {
+                return 0;
+            }
+        }
     }
 }

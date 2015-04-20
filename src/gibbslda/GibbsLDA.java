@@ -26,6 +26,7 @@ public class GibbsLDA {
         int iter=Integer.parseInt(args[2]);
         int topicNum=Integer.parseInt(args[3]);
         int saveAtiter=Integer.parseInt(args[4]);
+        double alpha=Double.parseDouble(args[5]);
         
         System.out.println("Documents Path is "+documentsPath);
         System.out.println("Model Path is "+modelPath);
@@ -39,7 +40,7 @@ public class GibbsLDA {
         
         //System.out.println(new Timestamp(date.getTime()));
         System.out.println("Loading Modeling Parameters");
-        LDAModel ldaModel = new LDAModel(0.5, 0.5, 100, 10);
+        LDAModel ldaModel = new LDAModel(alpha, 0.5, 100, 10);
         
         System.out.print(new Timestamp(date.getTime()));
         System.out.println(" Initializing the Model");
@@ -47,7 +48,8 @@ public class GibbsLDA {
         
         System.out.print(new Timestamp(date.getTime()));
         System.out.println(" Start Training Model");
-        ldaModel.trainingModel(docs,saveAtiter,modelPath);    
+        ldaModel.trainingModel(docs,saveAtiter,modelPath); 
+        ldaModel.displayLDA(docs, modelPath,10);
     }
     
 }
