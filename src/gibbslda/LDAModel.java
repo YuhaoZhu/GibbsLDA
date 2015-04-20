@@ -24,6 +24,8 @@ public class LDAModel {
     double alpha;
     double beta;
     int iterations;
+    
+    double W;
 
     int[][] doc;//doc[n][] is the Nth Doc and doc[n][m] is the Mth word in Nth Document
     int V, K, M;//V is vocabury size, k is the topic num, M is the document number
@@ -46,6 +48,7 @@ public class LDAModel {
     public void init(Documents docs) {
         M = docs.allDocumentsContent.size();
         V = docs.indexToFeatureMap.size();
+        W=docs.getWordCounts();
 
         nmk = new int[M][K];
         nkt = new int[K][V];
@@ -93,6 +96,7 @@ public class LDAModel {
         java.util.Date date = new java.util.Date();
 
         for (int iter = 0; iter < iterations; iter++) {
+            date = new java.util.Date();
             System.out.print(new Timestamp(date.getTime()));
             System.out.println(" Iterations: " + iter);
 
@@ -108,6 +112,9 @@ public class LDAModel {
             if (iter >= saveAtIter - 1) {
                 updatePara();
                 saveModel(iter + 1, docs, modelPath);
+            }
+            if (iter % 5 == 4) {
+                System.out.println("Preplexity is :" + String.valueOf(getPerplexity(docs)));
             }
         }
 
@@ -142,15 +149,15 @@ public class LDAModel {
     public void displayLDA(Documents docs, String modelPath, int topNum) throws IOException {
         String modelName = "LDA";
         BufferedWriter writer = new BufferedWriter(new FileWriter(modelPath + modelName + ".display"));
-        for (int i = 0; i < K; i++) {
+        for (int k = 0; k < K; k++) {
             List<Integer> indexToFeatureArray = new ArrayList<Integer>();
-            for (int j = 0; j < V; j++) {
-                indexToFeatureArray.add(new Integer(j));
+            for (int v = 0; v < V; v++) {
+                indexToFeatureArray.add(new Integer(v));
             }
-            Collections.sort(indexToFeatureArray, new LDAModel.tmpVar(phi[i]));
-            writer.write("topic " + i + "\t:\t");
+            Collections.sort(indexToFeatureArray, new LDAModel.tmpVar(phi[k]));
+            writer.write("topic " + k + "\t:\t");
             for (int t = 0; t < topNum; t++) {
-                writer.write(docs.indexToFeatureMap.get(indexToFeatureArray.get(t)) + " " + phi[i][indexToFeatureArray.get(t)] + "\t");
+                writer.write(docs.indexToFeatureMap.get(indexToFeatureArray.get(t)) + " " + phi[k][indexToFeatureArray.get(t)] + "\t");
             }
             writer.write("\n");
         }
@@ -223,4 +230,45 @@ public class LDAModel {
             }
         }
     }
+
+    private double getPerplexity(Documents docs) {
+        double sumLogOverDocs = 0;
+        double theta_jw, phi_jw;
+        int w;
+        int[] thisDoc;
+        for (int m = 0; m < M; m++) {
+            //float sumOfTheraOverT = 0;
+            //for (int k = 0; k < K; k++) { // assume K is globle
+            //    sumOfTheraOverT += (float) nmk[m][k];
+            //}
+
+            double sumLogOverTokens = 0;
+            double sumOverTopics;
+            //thisDoc = /*docs[m];*/ docs.allDocumentsContent.get(m).mappedDoc;
+            int size = /*docs[m].length;*/ docs.allDocumentsContent.get(m).mappedDoc.length;
+            for (int j = 0; j < size; j++) {
+                sumOverTopics = 0;
+                w = doc[m][j];
+                for (int k = 0; k < K; k++) // assume numOfTopics is globle
+                {
+                    theta_jw = (alpha + (float) (nmk[m][k]))
+                            / (alpha * K + nmkSum[m]);
+
+                    phi_jw = (beta + (float) (nkt[k][w]))
+                            / ((float) V * beta + (float) nktSum[k]);
+
+                    sumOverTopics += theta_jw * phi_jw;
+                }
+                sumLogOverTokens += Math.log(sumOverTopics);
+            }
+            sumLogOverDocs += sumLogOverTokens;
+        }
+        double logProbabilities;
+
+        //int numOfTotalWords = 1000000;   // assume numOfTotalWords is globle
+        logProbabilities = (-sumLogOverDocs) / W;
+
+        return Math.exp(logProbabilities);
+    }
+
 }
