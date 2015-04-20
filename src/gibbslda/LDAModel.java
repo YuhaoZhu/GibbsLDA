@@ -137,7 +137,6 @@ public class LDAModel {
             writer.write("\n");
         }
         writer.close();
-
     }
 
     public void displayLDA(Documents docs, String modelPath, int topNum) throws IOException {
@@ -206,19 +205,18 @@ public class LDAModel {
 
     public class tmpVar implements Comparator<Integer> {
 
-        public double[] sortProb; // Store probability of each word in topic k  
+        public double[] prob;
 
         public tmpVar(double[] sortProb) {
-            this.sortProb = sortProb;
+            this.prob = sortProb;
         }
 
         @Override
         public int compare(Integer o1, Integer o2) {
-            // TODO Auto-generated method stub  
-            //Sort topic word index according to the probability of each word in topic k  
-            if (sortProb[o1] > sortProb[o2]) {
+
+            if (prob[o1] > prob[o2]) {
                 return -1;
-            } else if (sortProb[o1] < sortProb[o2]) {
+            } else if (prob[o1] < prob[o2]) {
                 return 1;
             } else {
                 return 0;
