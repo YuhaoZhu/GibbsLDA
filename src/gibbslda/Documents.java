@@ -22,9 +22,9 @@ import java.util.List;
 public class Documents {
 
     ArrayList<Document> allDocumentsContent;
-    HashMap<String, Integer> featureToIndexMap;
+    HashMap<String, Integer> featureToIndexMap;//must save
     HashMap<String, Integer> featureCountsMap;
-    ArrayList<String> indexToFeatureMap;
+    ArrayList<String> indexToFeatureMap; //must save
 
     public Documents() {
         allDocumentsContent = new ArrayList<Document>();

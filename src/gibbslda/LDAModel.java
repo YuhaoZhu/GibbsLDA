@@ -13,7 +13,10 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
 /**
  *
@@ -31,10 +34,10 @@ public class LDAModel {
     int V, K, M;//V is vocabury size, k is the topic num, M is the document number
     int[][] z;// z[n][m] the topic disturbation
 
-    int[][] nmk;//given document m, count times of topic k. M*K  
-    int[][] nkt;//given topic k, count times of word t. K*V  
+    int[][] nmk;//given document m, count times of topic k. M*K  //Could save
+    int[][] nkt;//given topic k, count times of word t. K*V  // Must save
     int[] nmkSum;//Sum for each row in nmk  
-    int[] nktSum;//Sum for each row in nkt  
+    int[] nktSum;//Sum for each row in nkt  // Could save
     double[][] phi;//Parameters for topic-word distribution K*V  
     double[][] theta;//Parameters for doc-topic distribution M*K  
 
@@ -111,7 +114,8 @@ public class LDAModel {
 
             if (iter >= saveAtIter - 1) {
                 updatePara();
-                saveModel(iter + 1, docs, modelPath);
+                displayLDA(docs,modelPath,20,iter);
+                //saveModel(iter + 1, docs, modelPath);
             }
             if (iter % 5 == 4) {
                 System.out.println("Preplexity is :" + String.valueOf(getPerplexity(docs)));
@@ -119,35 +123,64 @@ public class LDAModel {
         }
 
         updatePara();
-        saveModel(0, docs, modelPath);
+        saveModel(iterations, docs, modelPath);
+        displayLDA(docs,modelPath,20,0);
     }
 
     private void saveModel(int iter, Documents docs, String modelPath) throws IOException {
-        String modelName = "LDA_" + iter;
+        String modelName = "LDA";
 
         //K*V
-        BufferedWriter writer = new BufferedWriter(new FileWriter(modelPath + modelName + ".phi"));
+        BufferedWriter writer = new BufferedWriter(new FileWriter(modelPath + modelName + ".nkt"));
         for (int k = 0; k < K; k++) {
             for (int v = 0; v < V; v++) {
-                writer.write(phi[k][v] + "\t");
+                writer.write(nkt[k][v] + "\t");
             }
             writer.write("\n");
         }
         writer.close();
 
         //M*K
-        writer = new BufferedWriter(new FileWriter(modelPath + modelName + ".theta"));
+        writer = new BufferedWriter(new FileWriter(modelPath + modelName + ".nmk"));
         for (int m = 0; m < M; m++) {
             for (int k = 0; k < K; k++) {
-                writer.write(phi[k][m] + "\t");
+                writer.write(nmk[m][k] + "\t");
             }
             writer.write("\n");
         }
         writer.close();
+        
+        writer = new BufferedWriter(new FileWriter(modelPath + modelName + ".nktSum"));
+        for (int k=0;k<K;k++){
+            writer.write(nktSum[k]+"\t");
+        }
+        writer.close();
+        
+        writer = new BufferedWriter(new FileWriter(modelPath + modelName + ".nmkSum"));
+        for (int m=0;m<M;m++){
+            writer.write(nmkSum[m]+"\t");
+        }
+        writer.close();
+        
+        writer = new BufferedWriter(new FileWriter(modelPath + modelName + ".featureToIndex"));
+        HashMap<String,Integer> map=docs.featureToIndexMap;
+        for(Entry<String, Integer> entry :map.entrySet()) {
+            writer.write(entry.getKey()+"\t"+entry.getValue()+"\n");
+        }
+        writer.close();
+        
+        writer = new BufferedWriter(new FileWriter(modelPath + modelName + ".indexToFeature"));
+        int size=docs.indexToFeatureMap.size();
+        for (int i=0;i<size;i++){
+            writer.write(String.valueOf(docs.indexToFeatureMap.get(i))+"\n");
+        }
+        writer.close();
+                
     }
+    
 
-    public void displayLDA(Documents docs, String modelPath, int topNum) throws IOException {
-        String modelName = "LDA";
+    public void displayLDA(Documents docs, String modelPath, int topNum,int iter) throws IOException {
+        String modelName = "LDA"+String.valueOf(iter);
         BufferedWriter writer = new BufferedWriter(new FileWriter(modelPath + modelName + ".display"));
         for (int k = 0; k < K; k++) {
             List<Integer> indexToFeatureArray = new ArrayList<Integer>();
@@ -187,7 +220,7 @@ public class LDAModel {
 
         double[] p = new double[K];
         for (int k = 0; k < K; k++) {
-            p[k] = (nkt[k][doc[m][n]] + beta) / (nktSum[k] + V * beta) * (nmk[m][k] + alpha) / (nmkSum[m] + K * alpha);
+            p[k] = (nkt[k][doc[m][n]] + beta) / (nktSum[k] + V * beta) * (nmk[m][k] + alpha); // (nmkSum[m] + K * alpha);
         }
 
         for (int k = 1; k < K; k++) {
@@ -202,10 +235,12 @@ public class LDAModel {
                 break;
             }
         }
-
+        
         nmk[m][newTopic]++;
+        //change to topic
         nkt[newTopic][doc[m][n]]++;
         nmkSum[m]++;
+        //change to topic
         nktSum[newTopic]++;
         return newTopic;
     }
