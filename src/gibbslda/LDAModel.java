@@ -117,7 +117,7 @@ public class LDAModel {
                 displayLDA(docs,modelPath,20,iter);
                 //saveModel(iter + 1, docs, modelPath);
             }
-            if (iter % 5 == 4) {
+            if (iter % 10 == 1) {
                 System.out.println("Preplexity is :" + String.valueOf(getPerplexity(docs)));
             }
         }

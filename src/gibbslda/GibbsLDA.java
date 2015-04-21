@@ -40,7 +40,7 @@ public class GibbsLDA {
         
         //System.out.println(new Timestamp(date.getTime()));
         System.out.println("Loading Modeling Parameters");
-        LDAModel ldaModel = new LDAModel(alpha, 0.5, iter, topicNum);
+        LDAModel ldaModel = new LDAModel(alpha, 0.1, iter, topicNum);
         
         System.out.print(new Timestamp(date.getTime()));
         System.out.println(" Initializing the Model");
