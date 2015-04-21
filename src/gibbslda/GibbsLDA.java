@@ -54,6 +54,9 @@ public class GibbsLDA {
             String documentPath=args[0];
             String modelPath=args[1];
             
+            LDAInfer ldaInfer=new LDAInfer(documentPath,modelPath);
+            ldaInfer.init();
+            
         } else{
             System.out.println("Training Model Usage:");
             System.out.println("Usage: java -jar GibbsLDA.jar documentPath ModelPath iterNum topicNUM saveAtiter alpha");
