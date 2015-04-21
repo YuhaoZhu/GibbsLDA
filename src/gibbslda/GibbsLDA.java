@@ -29,7 +29,7 @@ public class GibbsLDA {
             double alpha = Double.parseDouble(args[5]);
             
             
-            System.out.print("LDA rebuilt at 201504021-01:14");
+            System.out.println("LDA rebuilt at 201504021-01:14");
             System.out.println("Documents Path is " + documentsPath);
             System.out.println("Model Path is " + modelPath);
             System.out.println("Iteration # is " + iter);
