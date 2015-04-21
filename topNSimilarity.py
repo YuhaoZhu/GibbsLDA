@@ -42,7 +42,7 @@ def main():
     
     # 3. Get Similarity
     result_list = list()
-    for i in range(0,10):#len(vector_list)):
+    for i in range(len(vector_list)):
         results = dict()
         for j in range(len(vector_list)):
             dot_product = getSimilarity(vector_list, length_list, i, j) #
