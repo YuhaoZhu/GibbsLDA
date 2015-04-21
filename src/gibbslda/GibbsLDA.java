@@ -53,11 +53,20 @@ public class GibbsLDA {
             ldaModel.trainingModel(docs, saveAtiter, modelPath);
             //ldaModel.displayLDA(docs, modelPath,10,0);
         }else if (args.length==2){
+            java.util.Date date = new java.util.Date();
             String documentPath=args[0];
             String modelPath=args[1];
+            //String resultPath=args[2];
+            
+            Documents docs = new Documents();
+            docs.readTrainingDocuments(documentPath);
+            
+            System.out.print(new Timestamp(date.getTime()));
+            System.out.println(" Initializing the Model");
             
             LDAInfer ldaInfer=new LDAInfer(documentPath,modelPath);
-            ldaInfer.init();
+            ldaInfer.init(docs);
+            ldaInfer.infer(docs);
             
         } else{
             System.out.println("Training Model Usage:");

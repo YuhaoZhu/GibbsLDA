@@ -70,7 +70,8 @@ public class LDAModel {
                 doc[i][j] = mappedDoc[j];
             }
         }
-
+        
+        //
         z = new int[M][];
         for (int m = 0; m < M; m++) {
             Document thisDoc = docs.allDocumentsContent.get(m);
@@ -85,8 +86,10 @@ public class LDAModel {
                 //document m has been labeled as topic
                 nmk[m][topic]++;
                 //for topic, word doc[m][j] has been assigned as to this topic
+                //no need for infer
                 nkt[topic][doc[m][j]]++;
                 //word that has been assigned to topic
+                //no need for infer
                 nktSum[topic]++;
             }
             //
@@ -174,6 +177,13 @@ public class LDAModel {
         for (int i=0;i<size;i++){
             writer.write(String.valueOf(docs.indexToFeatureMap.get(i))+"\n");
         }
+        writer.close();
+        
+        writer = new BufferedWriter(new FileWriter(modelPath + modelName + ".param"));
+        writer.write(String.valueOf(this.alpha)+"\n");
+        writer.write(String.valueOf(this.beta)+"\n");
+        writer.write(String.valueOf(this.iterations)+"\n");
+        
         writer.close();
                 
     }

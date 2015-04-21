@@ -29,6 +29,7 @@ public class Documents {
     HashMap<String, Integer> featureCountsMap;
     ArrayList<String> indexToFeatureMap; //must save
     static HashMap<String,Integer> stopWordMap;
+    ArrayList<String> filenameList;
 
     public Documents() throws IOException {
         allDocumentsContent = new ArrayList<Document>();
@@ -36,8 +37,8 @@ public class Documents {
         featureCountsMap = new HashMap<String, Integer>();
         indexToFeatureMap = new ArrayList<String>();
         stopWordMap=new HashMap<String,Integer>();
-        loadStopWords();
-        
+        filenameList=new ArrayList<String>();
+        loadStopWords();    
     }
     
     private void loadStopWords() throws FileNotFoundException, IOException{
@@ -50,6 +51,7 @@ public class Documents {
     }
     public void readTrainingDocuments(String trainingPath) throws IOException {
         for (File docPath : new File(trainingPath).listFiles()) {
+            filenameList.add(docPath.getName());
             Document doc = new Document(docPath.getAbsolutePath(), featureToIndexMap, featureCountsMap, indexToFeatureMap);
             allDocumentsContent.add(doc);
         }
