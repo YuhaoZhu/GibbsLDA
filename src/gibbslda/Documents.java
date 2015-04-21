@@ -11,6 +11,9 @@ import java.util.HashMap;
 
 import com.google.common.base.Charsets;
 import com.google.common.io.Files;
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
@@ -25,14 +28,26 @@ public class Documents {
     HashMap<String, Integer> featureToIndexMap;//must save
     HashMap<String, Integer> featureCountsMap;
     ArrayList<String> indexToFeatureMap; //must save
+    static HashMap<String,Integer> stopWordMap;
 
-    public Documents() {
+    public Documents() throws IOException {
         allDocumentsContent = new ArrayList<Document>();
         featureToIndexMap = new HashMap<String, Integer>();
         featureCountsMap = new HashMap<String, Integer>();
         indexToFeatureMap = new ArrayList<String>();
+        stopWordMap=new HashMap<String,Integer>();
+        loadStopWords();
+        
     }
-
+    
+    private void loadStopWords() throws FileNotFoundException, IOException{
+        BufferedReader reader = new BufferedReader(new FileReader("stopwords.txt"));
+        String thisLine;
+        while ((thisLine=reader.readLine())!=null){
+            stopWordMap.put(thisLine, 0);
+        }
+        
+    }
     public void readTrainingDocuments(String trainingPath) throws IOException {
         for (File docPath : new File(trainingPath).listFiles()) {
             Document doc = new Document(docPath.getAbsolutePath(), featureToIndexMap, featureCountsMap, indexToFeatureMap);
@@ -60,14 +75,20 @@ public class Documents {
             String text = Files.toString(new File(absolutePath), Charsets.UTF_8);
             text = text.replaceAll("\\n", " ");
             String[] tmp = text.split(" ");
-
-            words = Arrays.asList(tmp);
-            for (int i = 0; i < words.size(); i++) {
-                if (isStopFeature(words.get(i))) {
-                    words.remove(i);
-                    i = i - 1;
+            
+            for (int i=0;i<tmp.length;i++){
+                if (isStopFeature(tmp[i])==false) {
+                    words.add(tmp[i]);
                 }
             }
+            
+           // words = Arrays.asList(tmp);
+            //for (int i = 0; i < words.size(); i++) {
+            //    if (isStopFeature(words.get(i))) {
+            //        words.remove(i);
+            //        i = i - 1;
+            //    }
+            //}
 
             this.mappedDoc = new int[words.size()];
             for (int i = 0; i < words.size(); i++) {
@@ -87,9 +108,8 @@ public class Documents {
         }
 
         private boolean isStopFeature(String str) {
-            return false;
+            return stopWordMap.containsKey(str.toLowerCase());
         }
-
     }
 
 }
