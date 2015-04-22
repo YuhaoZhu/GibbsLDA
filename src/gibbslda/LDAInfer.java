@@ -7,10 +7,13 @@ package gibbslda;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -42,6 +45,7 @@ public class LDAInfer {
     ArrayList<String> indexToFeatureMap;
 
     public LDAInfer(String documentPath, String modelPath) {
+
         featureToIndexMap = new HashMap<String, Integer>();
         indexToFeatureMap = new ArrayList<String>();
         this.documentPath = documentPath;
@@ -49,30 +53,37 @@ public class LDAInfer {
         //this.resultPath = resultPath;
     }
 
-    public void init(Documents docs) throws FileNotFoundException, IOException {
+    public void init(Documents docs) throws FileNotFoundException, IOException, ClassNotFoundException {
 
         this.M = docs.allDocumentsContent.size();
 
         String thisLine;
 
+        ObjectInputStream oin = new ObjectInputStream(new FileInputStream(modelPath + "LDA.indexToFeature"));
+        indexToFeatureMap = (ArrayList<String>) oin.readObject();
+
+        oin = new ObjectInputStream(new FileInputStream(modelPath + "LDA.featureToIndex"));
+        featureToIndexMap = (HashMap<String, Integer>) oin.readObject();
+
         //restore indexToFeature
-        BufferedReader reader = new BufferedReader(new FileReader(modelPath + "LDA.indexToFeature"));
-        while ((thisLine = reader.readLine()) != null) {
-            //System.out.println(thisLine);
-            indexToFeatureMap.add(thisLine);
-        }
+        BufferedReader reader;
+        //while ((thisLine = reader.readLine()) != null) {
+        //System.out.println(thisLine);
+        //    indexToFeatureMap.add(thisLine);
+        // }
         //System.out.println(indexToFeatureMap.size());
         this.V = indexToFeatureMap.size();
-        reader.close();
+        //reader.close();
 
-        reader = new BufferedReader(new FileReader(modelPath + "LDA.featureToIndex"));
+        //reader = new BufferedReader(new FileReader(modelPath + "LDA.featureToIndex"));
         String[] splited;
-        while ((thisLine = reader.readLine()) != null) {
-            splited = thisLine.split("\t");
-            featureToIndexMap.put(splited[0], Integer.parseInt(splited[1]));
-        }
+        //while ((thisLine = reader.readLine()) != null) {
+        //    splited = thisLine.split("\t");
+        //System.out.println(thisLine);
+        //    featureToIndexMap.put(splited[0], Integer.parseInt(splited[1]));
+        //}
         //System.out.println(featureToIndexMap.size());
-        reader.close();
+        //reader.close();
 
         reader = new BufferedReader(new FileReader(modelPath + "LDA.nktSum"));
         thisLine = reader.readLine();
@@ -84,7 +95,7 @@ public class LDAInfer {
         }
         //System.out.println(K);
         reader.close();
-
+        //System.out.println(V);
         reader = new BufferedReader(new FileReader(modelPath + "LDA.nkt"));
         nkt = new int[K][V];
         for (int k = 0; k < K; k++) {
@@ -99,25 +110,42 @@ public class LDAInfer {
         reader = new BufferedReader(new FileReader(modelPath + "LDA.param"));
         this.alpha = Double.parseDouble(reader.readLine());
         this.beta = Double.parseDouble(reader.readLine());
-        this.iter = Integer.parseInt(reader.readLine())/10;
+        this.iter = Integer.parseInt(reader.readLine()) / 10;
         reader.close();
 
         //System.out.println(this.alpha);
         //System.out.println(this.beta);
         nmk = new int[M][K];
         nmkSum = new int[M];
-
         doc = new int[M][];
-        for (int i = 0; i < M; i++) {
-            Documents.Document thisDoc = docs.allDocumentsContent.get(i);
-            int[] mappedDoc = thisDoc.mappedDoc;
-            int size = mappedDoc.length;
-            doc[i] = new int[size];
-            for (int j = 0; j < size; j++) {
-                doc[i][j] = mappedDoc[j];
-            }
-        }
 
+        System.out.println(M);
+        int fileM = 0;
+        for (File docPath : new File(documentPath).listFiles(new Documents.FileNameSelector("txt"))) {
+            String absolutePath = docPath.getAbsolutePath();
+            reader = new BufferedReader(new FileReader(absolutePath));
+            while ((thisLine = reader.readLine()) != null) {
+                splited = thisLine.split(" ");
+                doc[fileM] = new int[splited.length];
+                for (int j = 0; j < splited.length; j++) {
+                    if (featureToIndexMap.containsKey(splited[j])) {
+                        doc[fileM][j] = featureToIndexMap.get(splited[j]);
+                    }
+                }
+            }
+            fileM++;
+        }
+        System.out.println(fileM);
+
+        //for (int i = 0; i < M; i++) {
+        //    Documents.Document thisDoc = docs.allDocumentsContent.get(i);
+        //    int[] mappedDoc = thisDoc.mappedDoc;
+        //    int size = mappedDoc.length;
+        //    doc[i] = new int[size];
+        //    for (int j = 0; j < size; j++) {
+        //        doc[i][j] = mappedDoc[j];
+        //    }
+        //}
         z = new int[M][];
         for (int m = 0; m < M; m++) {
             Documents.Document thisDoc = docs.allDocumentsContent.get(m);
@@ -149,11 +177,11 @@ public class LDAInfer {
     public void infer(Documents docs) throws IOException {
         java.util.Date date = new java.util.Date();
         for (int i = 0; i < iter; i++) {
-            
+
             date = new java.util.Date();
             System.out.print(new Timestamp(date.getTime()));
             System.out.println(" Iterations: " + i);
-            
+
             for (int m = 0; m < M; m++) {
                 int size = docs.allDocumentsContent.get(m).mappedDoc.length;
                 for (int j = 0; j < size; j++) {
@@ -165,7 +193,7 @@ public class LDAInfer {
 
         BufferedWriter writer = new BufferedWriter(new FileWriter(this.modelPath + "LDA.result"));
         for (int m = 0; m < M; m++) {
-            writer.write(docs.filenameList.get(m)+"\t");
+            writer.write(docs.filenameList.get(m) + "\t");
             for (int k = 0; k < K; k++) {
                 writer.write(nmk[m][k] + "\t");
             }

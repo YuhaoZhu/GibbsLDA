@@ -6,6 +6,7 @@
 package gibbslda;
 
 import gibbslda.Documents.Document;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.sql.Timestamp;
 
@@ -18,7 +19,7 @@ public class GibbsLDA {
     /**
      * @param args the command line arguments
      */
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws IOException, FileNotFoundException, ClassNotFoundException {
         // TODO code application logic here
         if (args.length == 6) {
             String documentsPath = args[0];

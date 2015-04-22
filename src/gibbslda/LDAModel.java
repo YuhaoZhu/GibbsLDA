@@ -7,8 +7,10 @@ package gibbslda;
 
 import gibbslda.Documents.Document;
 import java.io.BufferedWriter;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -165,19 +167,29 @@ public class LDAModel {
         }
         writer.close();
         
-        writer = new BufferedWriter(new FileWriter(modelPath + modelName + ".featureToIndex"));
-        HashMap<String,Integer> map=docs.featureToIndexMap;
-        for(Entry<String, Integer> entry :map.entrySet()) {
-            writer.write(entry.getKey()+"\t"+entry.getValue()+"\n");
-        }
-        writer.close();
+        ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(modelPath + modelName + ".featureToIndex"));
+        oos.writeObject(docs.featureToIndexMap);
+        oos.flush();
+        oos.close();
         
-        writer = new BufferedWriter(new FileWriter(modelPath + modelName + ".indexToFeature"));
-        int size=docs.indexToFeatureMap.size();
-        for (int i=0;i<size;i++){
-            writer.write(String.valueOf(docs.indexToFeatureMap.get(i))+"\n");
-        }
-        writer.close();
+        //writer = new BufferedWriter(new FileWriter(modelPath + modelName + ".featureToIndex"));
+        //HashMap<String,Integer> map=docs.featureToIndexMap;
+        //for(Entry<String, Integer> entry :map.entrySet()) {
+        //    writer.write(entry.getKey().replace("\n", "")+"\t"+entry.getValue()+"\n");
+        //}
+        //writer.close();
+        
+        oos = new ObjectOutputStream(new FileOutputStream(modelPath + modelName + ".indexToFeature"));
+        oos.writeObject(docs.indexToFeatureMap);
+        oos.flush();
+        oos.close();
+        
+        //writer = new BufferedWriter(new FileWriter(modelPath + modelName + ".indexToFeature"));
+        //int size=docs.indexToFeatureMap.size();
+        //for (int i=0;i<size;i++){
+        //    writer.write(String.valueOf(docs.indexToFeatureMap.get(i).replace("\n", ""))+"\n");
+        //}
+        //writer.close();
         
         writer = new BufferedWriter(new FileWriter(modelPath + modelName + ".param"));
         writer.write(String.valueOf(this.alpha)+"\n");

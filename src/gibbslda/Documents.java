@@ -14,6 +14,7 @@ import com.google.common.io.Files;
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
@@ -50,7 +51,7 @@ public class Documents {
         
     }
     public void readTrainingDocuments(String trainingPath) throws IOException {
-        for (File docPath : new File(trainingPath).listFiles()) {
+        for (File docPath : new File(trainingPath).listFiles(new FileNameSelector("txt"))) {
             filenameList.add(docPath.getName());
             Document doc = new Document(docPath.getAbsolutePath(), featureToIndexMap, featureCountsMap, indexToFeatureMap);
             allDocumentsContent.add(doc);
@@ -111,6 +112,19 @@ public class Documents {
 
         private boolean isStopFeature(String str) {
             return stopWordMap.containsKey(str.toLowerCase());
+        }
+    }
+
+    public static class FileNameSelector implements FilenameFilter {
+        
+        String ext=".";
+        public FileNameSelector(String txt) {
+            ext=ext+txt;
+        }
+
+        @Override
+        public boolean accept(File dir, String name) {
+            return name.endsWith(ext); //To change body of generated methods, choose Tools | Templates.
         }
     }
 
