@@ -188,7 +188,7 @@ public class LDAInfer {
 
     }
 
-    public void infer(Documents docs) throws IOException {
+    public void infer() throws IOException {
         java.util.Date date = new java.util.Date();
         for (int i = 0; i < iter; i++) {
 
