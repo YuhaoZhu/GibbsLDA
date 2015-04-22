@@ -81,9 +81,9 @@ def getSimilarity(vector_list, length_list, i, j):
     if len(vector_list[i]) != len(vector_list[j]):
         print ("Error!!! Vector lenght inconsistency.")
         exit()
-    dot_product = 0
+    dot_product = 0.0
     for k in range(len(vector_list[j])):
-        dot_product += vector_list[i][k] * vector_list[j][k];
+        dot_product += vector_list[i][k] * vector_list[j][k]
     dot_product /= (length_list[i] * length_list[j])
     return dot_product
 

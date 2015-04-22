@@ -60,7 +60,7 @@ public class LDAInfer {
         //this.M = docs.allDocumentsContent.size();
         //System.out.println(M);
         this.M=new File(documentPath).listFiles(new Documents.FileNameSelector("txt")).length;
-        System.out.println(M);
+        //System.out.println(M);
         
         String thisLine;
 
