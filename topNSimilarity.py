@@ -1,3 +1,5 @@
+# python3 topNSimilarity.py lda.result N K
+
 import os
 import sys
 import math
@@ -9,7 +11,8 @@ def main():
     file_name = input_path.split('.')
     output_path = file_name[0]+'.similarity'
     
-    N = int(sys.argv[2])
+    N = int(sys.argv[2])        # Num of top N similar docs to print out
+    K = int(sys.argv[3])        # Num of top K values in each vector for cosine
     
     file_list = list()
     vector_list = list()
@@ -29,7 +32,8 @@ def main():
             vector_list.append(vector)
         f.close()
 
-    #print (len(file_list))
+    # 2.0 Get magnitude of vectors    
+    reduceLowValueInVector(vector_list, K)  # Disable this for K = numOfTopic
     
     # 2. Get magnitude of vectors
     length_list = list()
@@ -42,10 +46,11 @@ def main():
     
     # 3. Get Similarity
     result_list = list()
-    for i in range(len(vector_list)):
+    for i in range(len(vector_list)):    # for i in range(0,10):
+        print (i)
         results = dict()
         for j in range(len(vector_list)):
-            dot_product = getSimilarity(vector_list, length_list, i, j) #
+            dot_product = getSimilarity(vector_list, length_list, i, j)
             results[j] = dot_product
         result_list.append(results)
 
@@ -83,5 +88,22 @@ def getSimilarity(vector_list, length_list, i, j):
     return dot_product
 
 
+def reduceLowValueInVector(vector_list, K):
+    for i in range(len(vector_list)):
+        vector_temp = dict()
+        for k in range(len(vector_list[i])):
+            vector_temp[k] = vector_list[i][k]
+        
+        sorted_x = sorted(vector_temp.items(), key=operator.itemgetter(1))
+        sorted_x.reverse()
+        
+        n = 0
+        for k, v in sorted_x:
+            if n < K:
+                continue;
+            n += 1
+            vector_list[i][k] = 0.0
+        
+        
 if __name__ == "__main__":
     main()
