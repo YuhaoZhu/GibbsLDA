@@ -43,20 +43,25 @@ public class LDAInfer {
 
     HashMap<String, Integer> featureToIndexMap;//must save
     ArrayList<String> indexToFeatureMap;
+    ArrayList<String> filenameList;
 
     public LDAInfer(String documentPath, String modelPath) {
 
         featureToIndexMap = new HashMap<String, Integer>();
         indexToFeatureMap = new ArrayList<String>();
+        filenameList=new ArrayList<String>();
         this.documentPath = documentPath;
         this.modelPath = modelPath;
         //this.resultPath = resultPath;
     }
 
-    public void init(Documents docs) throws FileNotFoundException, IOException, ClassNotFoundException {
+    public void init() throws FileNotFoundException, IOException, ClassNotFoundException {
 
-        this.M = docs.allDocumentsContent.size();
-
+        //this.M = docs.allDocumentsContent.size();
+        //System.out.println(M);
+        this.M=new File(documentPath).listFiles(new Documents.FileNameSelector("txt")).length;
+        System.out.println(M);
+        
         String thisLine;
 
         ObjectInputStream oin = new ObjectInputStream(new FileInputStream(modelPath + "LDA.indexToFeature"));
@@ -64,6 +69,9 @@ public class LDAInfer {
 
         oin = new ObjectInputStream(new FileInputStream(modelPath + "LDA.featureToIndex"));
         featureToIndexMap = (HashMap<String, Integer>) oin.readObject();
+        
+        oin = new ObjectInputStream(new FileInputStream(modelPath + "LDA.filenameList"));
+        filenameList = (ArrayList<String>) oin.readObject();
 
         //restore indexToFeature
         BufferedReader reader;
@@ -119,23 +127,29 @@ public class LDAInfer {
         nmkSum = new int[M];
         doc = new int[M][];
 
-        System.out.println(M);
+        //System.out.println(M);
         int fileM = 0;
         for (File docPath : new File(documentPath).listFiles(new Documents.FileNameSelector("txt"))) {
             String absolutePath = docPath.getAbsolutePath();
             reader = new BufferedReader(new FileReader(absolutePath));
+            String fileContent="";
             while ((thisLine = reader.readLine()) != null) {
-                splited = thisLine.split(" ");
-                doc[fileM] = new int[splited.length];
-                for (int j = 0; j < splited.length; j++) {
-                    if (featureToIndexMap.containsKey(splited[j])) {
-                        doc[fileM][j] = featureToIndexMap.get(splited[j]);
-                    }
+                fileContent+=thisLine+" ";
+            }
+            splited=fileContent.split(" ");
+            ArrayList<String> splitedList=new ArrayList<String>();
+            for (int j=0;j<splited.length;j++){
+                if (featureToIndexMap.containsKey(splited[j])){
+                    splitedList.add(splited[j]);
                 }
+            }
+            doc[fileM] = new int[splitedList.size()];
+            for (int j=0;j<splitedList.size();j++){
+                doc[fileM][j]=featureToIndexMap.get(splitedList.get(j));
             }
             fileM++;
         }
-        System.out.println(fileM);
+        //System.out.println(fileM);
 
         //for (int i = 0; i < M; i++) {
         //    Documents.Document thisDoc = docs.allDocumentsContent.get(i);
@@ -148,9 +162,9 @@ public class LDAInfer {
         //}
         z = new int[M][];
         for (int m = 0; m < M; m++) {
-            Documents.Document thisDoc = docs.allDocumentsContent.get(m);
-            int[] mappedDoc = thisDoc.mappedDoc;
-            int size = mappedDoc.length;
+            //Documents.Document thisDoc = docs.allDocumentsContent.get(m);
+            //int[] mappedDoc = thisDoc.mappedDoc;
+            int size = doc[m].length;
             z[m] = new int[size];
             for (int j = 0; j < size; j++) {
                 //random pick a topic
@@ -183,7 +197,7 @@ public class LDAInfer {
             System.out.println(" Iterations: " + i);
 
             for (int m = 0; m < M; m++) {
-                int size = docs.allDocumentsContent.get(m).mappedDoc.length;
+                int size = doc[m].length;
                 for (int j = 0; j < size; j++) {
                     int newTopic = samplingTopic(m, j);
                     z[m][j] = newTopic;
@@ -193,7 +207,7 @@ public class LDAInfer {
 
         BufferedWriter writer = new BufferedWriter(new FileWriter(this.modelPath + "LDA.result"));
         for (int m = 0; m < M; m++) {
-            writer.write(docs.filenameList.get(m) + "\t");
+            writer.write(filenameList.get(m) + "\t");
             for (int k = 0; k < K; k++) {
                 writer.write(nmk[m][k] + "\t");
             }
@@ -211,13 +225,6 @@ public class LDAInfer {
         //nktSum[topic]--;
         double[] p = new double[K];
         for (int k = 0; k < K; k++) {
-            //System.out.print(nkt[k]);
-            //System.out.print(doc[m][n]);
-            //System.out.print(beta);
-            //System.out.print(nktSum[k]);
-            //System.out.print(V);
-            //System.out.print(alpha);
-            //System.out.print(nmk[m][k]);
             p[k] = (nkt[k][doc[m][n]] + beta) / (nktSum[k] + V * beta) * (nmk[m][k] + alpha); // (nmkSum[m] + K * alpha);
         }
 

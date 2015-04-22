@@ -184,6 +184,11 @@ public class LDAModel {
         oos.flush();
         oos.close();
         
+        oos = new ObjectOutputStream(new FileOutputStream(modelPath + modelName + ".filenameList"));
+        oos.writeObject(docs.filenameList);
+        oos.flush();
+        oos.close();
+        
         //writer = new BufferedWriter(new FileWriter(modelPath + modelName + ".indexToFeature"));
         //int size=docs.indexToFeatureMap.size();
         //for (int i=0;i<size;i++){

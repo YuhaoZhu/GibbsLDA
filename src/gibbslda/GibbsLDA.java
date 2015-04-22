@@ -66,7 +66,7 @@ public class GibbsLDA {
             System.out.println(" Initializing the Model");
             
             LDAInfer ldaInfer=new LDAInfer(documentPath,modelPath);
-            ldaInfer.init(docs);
+            ldaInfer.init();
             ldaInfer.infer(docs);
             
         } else{
