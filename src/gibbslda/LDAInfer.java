@@ -34,6 +34,8 @@ public class LDAInfer {
 
     double alpha;
     double beta;
+    
+    double[][] theta;//Parameters for doc-topic distribution M*K  
 
     int V, K, M;//V is vocabury size, k is the topic num, M is the document number
 
@@ -54,6 +56,15 @@ public class LDAInfer {
         this.modelPath = modelPath;
         //this.resultPath = resultPath;
     }
+    
+    private void updatePara() {
+
+        for (int m = 0; m < M; m++) {
+            for (int k = 0; k < K; k++) {
+                theta[m][k] = (nmk[m][k] + alpha) / (nmkSum[m] + K * alpha);
+            }
+        }
+    }
 
     public void init() throws FileNotFoundException, IOException, ClassNotFoundException {
 
@@ -70,8 +81,8 @@ public class LDAInfer {
         oin = new ObjectInputStream(new FileInputStream(modelPath + "LDA.featureToIndex"));
         featureToIndexMap = (HashMap<String, Integer>) oin.readObject();
         
-        oin = new ObjectInputStream(new FileInputStream(modelPath + "LDA.filenameList"));
-        filenameList = (ArrayList<String>) oin.readObject();
+        //oin = new ObjectInputStream(new FileInputStream(modelPath + "LDA.filenameList"));
+        //filenameList = (ArrayList<String>) oin.readObject();
 
         //restore indexToFeature
         BufferedReader reader;
@@ -131,11 +142,13 @@ public class LDAInfer {
         int fileM = 0;
         for (File docPath : new File(documentPath).listFiles(new Documents.FileNameSelector("txt"))) {
             String absolutePath = docPath.getAbsolutePath();
+            filenameList.add(docPath.getName());
             reader = new BufferedReader(new FileReader(absolutePath));
             String fileContent="";
             while ((thisLine = reader.readLine()) != null) {
                 fileContent+=thisLine+" ";
             }
+            reader.close();
             splited=fileContent.split(" ");
             ArrayList<String> splitedList=new ArrayList<String>();
             for (int j=0;j<splited.length;j++){
@@ -183,6 +196,7 @@ public class LDAInfer {
             //
             nmkSum[m] = size;
         }
+        theta = new double[M][K];
 
         System.out.println("Model restored successfully");
 
@@ -204,12 +218,13 @@ public class LDAInfer {
                 }
             }
         }
-
+        updatePara();
+        
         BufferedWriter writer = new BufferedWriter(new FileWriter(this.modelPath + "LDA.result"));
         for (int m = 0; m < M; m++) {
             writer.write(filenameList.get(m) + "\t");
             for (int k = 0; k < K; k++) {
-                writer.write(nmk[m][k] + "\t");
+                writer.write(theta[m][k] + "\t");
             }
             writer.write("\n");
         }
