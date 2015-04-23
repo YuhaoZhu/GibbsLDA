@@ -148,6 +148,7 @@ public class LDAInfer {
             while ((thisLine = reader.readLine()) != null) {
                 fileContent+=thisLine+" ";
             }
+            reader.close();
             splited=fileContent.split(" ");
             ArrayList<String> splitedList=new ArrayList<String>();
             for (int j=0;j<splited.length;j++){
