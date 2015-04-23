@@ -41,6 +41,9 @@ public class DataParser {
         relations = new HashMap<String, String>();
     }
 
+    /**
+     * read the data from xml and parse it to plain texts
+     */
     public void parse() {
         File input = new File(dataInputPath);
         if(input.exists() && input.isFile()) {
@@ -55,7 +58,6 @@ public class DataParser {
 //                System.out.println("Root element :" + doc.getDocumentElement().getNodeName());
 
                 NodeList nList = doc.getElementsByTagName("row");
-                List<List<String>> docs = new ArrayList<List<String>>();
                 for(int i = 0; i < nList.getLength(); i++) {
                     Node node = nList.item(i);
                     if(node.getNodeType() == Node.ELEMENT_NODE) {
@@ -93,6 +95,10 @@ public class DataParser {
         }
     }
 
+
+    /**
+     * build the List of plain text doc to List of doc <tokens, tf-idf> format
+     */
     private void buildResult() {
         List<List<String>> ansArray = new ArrayList<List<String>>();
         List<List<String>> qusArray = new ArrayList<List<String>>();
@@ -146,6 +152,11 @@ public class DataParser {
         }
     }
 
+    /**
+     * dumps Map file to the disk
+     * @param docs
+     * @param output
+     */
     public void dumps(Map<String, Map<String, Float>> docs, String output) {
         try {
             FileWriter fw = new FileWriter(output);
@@ -170,6 +181,11 @@ public class DataParser {
 
     }
 
+    /**
+     * convert Array to whitespace separated String
+     * @param a
+     * @return
+     */
     public String join(Object[] a) {
         if(a == null)
             return "null";
@@ -186,6 +202,11 @@ public class DataParser {
     }
 
 
+    /**
+     * tokenize the body text field of input xml
+     * @param body
+     * @return
+     */
     public List<String> tokenize(String body) {
         String text = Jsoup.parse(StringEscapeUtils.unescapeHtml4(body)).text();
 //        Analyzer analyzer = new StandardAnalyzer(CharArraySet.EMPTY_SET);
@@ -204,68 +225,6 @@ public class DataParser {
         }
         return result;
     }
-
-
-
-//    public void dumps() {
-//        try {
-//            File ans = new File(dataOutputPath + "_ans");
-//            FileWriter ansOut = new FileWriter(ans.getAbsoluteFile());
-//            BufferedWriter bw = new BufferedWriter(ansOut);
-//            for(String line : resultAns) {
-//                bw.write(line + "\n");
-//            }
-//            bw.close();
-//
-//            File qus = new File(dataOutputPath + "_qus");
-//            FileWriter qusOut = new FileWriter(qus.getAbsoluteFile());
-//            bw = new BufferedWriter(qusOut);
-//            for(String line : resultQus) {
-//                bw.write(line + "\n");
-//            }
-//            bw.close();
-//
-//            System.out.println("DONE!");
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-//    }
-
-//    public String tokenize(String body, List<String> sentence) {
-//        String text = Jsoup.parse(StringEscapeUtils.unescapeHtml4(body)).text();
-////        Analyzer analyzer = new StandardAnalyzer(CharArraySet.EMPTY_SET);
-//        Analyzer analyzer = new StandardAnalyzer();
-//        HashMap<String, Integer> map = new LinkedHashMap<String, Integer>();
-//        try {
-//            TokenStream tokenStream = analyzer.tokenStream("body", text);
-//            CharTermAttribute cattr = tokenStream.addAttribute(CharTermAttribute.class);
-//            tokenStream.reset();
-//            while(tokenStream.incrementToken()) {
-//                String token = cattr.toString();
-//                if(map.containsKey(token)) {
-//                    map.put(token, map.get(token) + 1);
-//                } else {
-//                    map.put(token, 1);
-//                }
-//            }
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-//
-//        // construct feature vector for each document
-//        StringBuilder res = new StringBuilder();
-//        int i = 0;
-//        for(Map.Entry<String, Integer> pair : map.entrySet()) {
-//            if(i > 0)
-//                res.append(" ");
-//            res.append(pair.getKey());
-//            res.append(" ");
-//            res.append(pair.getValue());
-//            i++;
-//        }
-////        System.out.println(res.toString());
-//        return res.toString();
-//    }
 
     public static void main(String[] args) {
         String inputPath = "/Users/zhoutsby/Downloads/english.stackexchange.com/test.xml";

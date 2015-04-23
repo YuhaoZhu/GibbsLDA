@@ -5,6 +5,7 @@ import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
+import org.apache.lucene.analysis.util.CharArraySet;
 import org.jsoup.Jsoup;
 import org.w3c.dom.Document;
 import org.w3c.dom.NamedNodeMap;
@@ -28,7 +29,7 @@ public class LDADataParser {
     private String dataOutputPath = "";
     private Map<String, String> resultAns;
     private Map<String, String> resultQus;
-    private Map<String, List<String>> relations;
+    private Map<String, String> relations;
     private Map<String, Double> idfs;
     private Pattern pattern = Pattern.compile("^[a-zA-Z_0-9'\\u2019]+$");
 //    private Pattern pattern = Pattern.compile("^[\\u0000-\\u0080]+$");
@@ -38,7 +39,8 @@ public class LDADataParser {
         this.dataOutputPath = outputPath;
         resultAns = new HashMap<String, String>();
         resultQus = new HashMap<String, String>();
-        relations = new HashMap<String, List<String>>();
+//        relations = new HashMap<String, List<String>>();
+        relations = new HashMap<String, String>();
     }
 
     public void parse() {
@@ -51,9 +53,6 @@ public class LDADataParser {
                 Document doc = dBuilder.parse(input);
 
                 doc.getDocumentElement().normalize();
-
-//                System.out.println("Root element :" + doc.getDocumentElement().getNodeName());
-
                 NodeList nList = doc.getElementsByTagName("row");
                 List<List<String>> docs = new ArrayList<List<String>>();
                 for(int i = 0; i < nList.getLength(); i++) {
@@ -63,33 +62,25 @@ public class LDADataParser {
                         String id = attributes.getNamedItem("Id").getNodeValue();
                         if(attributes.getNamedItem("PostTypeId").getNodeValue().equals("1")) {
                             //question
-                            List<String> sentence = new ArrayList<String>();
                             String title = attributes.getNamedItem("Title").getNodeValue();
                             String body = attributes.getNamedItem("Body").getNodeValue();
-                            String feats = tokenize(title + " " + body, sentence);
-                            resultQus.put(id, feats);
-                            docs.add(sentence);
+                            List<String> feats = tokenize(title + " " + body);
+                            String res = join(feats.toArray());
+                            resultQus.put(id, res);
                         } else if(attributes.getNamedItem("PostTypeId").getNodeValue().equals("2")) {
                             // answer
-                            List<String> sentence = new ArrayList<String>();
                             String body = attributes.getNamedItem("Body").getNodeValue();
-                            String feats = tokenize(body, sentence);
-                            resultAns.put(id, feats);
+                            List<String> feats = tokenize(body);
+                            String res = join(feats.toArray());
+                            resultAns.put(id, res);
                             String parentId = attributes.getNamedItem("ParentId").getNodeValue();
-                            if(relations.containsKey(parentId)) {
-                                relations.get(parentId).add(id);
-                            } else {
-                                List<String> list = new ArrayList<String>();
-                                list.add(id);
-                                relations.put(parentId, list);
-                            }
-                            docs.add(sentence);
+                            relations.put(id, parentId);
                         }
                     }
                 }
 
-                IDFCalculator calc = new IDFCalculator(docs);
-                idfs = calc.calc();
+//                IDFCalculator calc = new IDFCalculator(docs);
+//                idfs = calc.calc();
 
             } catch (ParserConfigurationException e) {
                 e.printStackTrace();
@@ -105,24 +96,52 @@ public class LDADataParser {
     }
 
     public void dumps() {
-        try {
-            Iterator<Map.Entry<String, List<String>>> it = relations.entrySet().iterator();
-            while(it.hasNext()) {
-                Map.Entry<String, List<String>> pair = it.next();
-                String fileName = dataOutputPath + "_" + pair.getKey() + ".txt";
-                File ans = new File(fileName);
-                FileWriter ansOut = new FileWriter(ans.getAbsoluteFile());
-                BufferedWriter bw = new BufferedWriter(ansOut);
-//                bw.write(resultQus.get(pair.getKey()) + '\n');
-                for(String ansKey : pair.getValue()) {
-                    bw.write(resultAns.get(ansKey) + '\n');
-                }
-                bw.close();
-                it.remove();
+        Map<String, List<String>> answer = new HashMap<String, List<String>>();
+        Map<String, String> question = new HashMap<String, String>();
+        for(Map.Entry<String, String> entry : resultAns.entrySet()) {
+            String qid = relations.get(entry.getKey());
+            if(answer.containsKey(qid)) {
+                answer.get(qid).add(entry.getValue());
+            } else {
+                List<String> res = new ArrayList<String>();
+                res.add(entry.getValue());
+                answer.put(qid, res);
             }
-            System.out.println("DONE!");
-        } catch (IOException e) {
-            e.printStackTrace();
+
+            if(!question.containsKey(qid)) {
+                question.put(qid, resultQus.get(qid));
+            }
+        }
+
+        // write to answer folder
+        for (Map.Entry<String, List<String>> entry : answer.entrySet()) {
+            try {
+                for (int i = 0; i < entry.getValue().size();i++) {
+                    String line = entry.getValue().get(i);
+                    String qid = String.format("%08d", Integer.parseInt(entry.getKey()));
+                    String path = dataOutputPath + "/Answer/ans_" + qid + "_" + String.format("%02d", i) + ".txt";
+                    FileWriter fw = new FileWriter(path);
+                    BufferedWriter bw = new BufferedWriter(fw);
+                    bw.write(line + "\n");
+                    bw.close();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        // write to question folder
+        for(Map.Entry<String, String> entry : question.entrySet()) {
+            String qid = String.format("%08d", Integer.parseInt(entry.getKey()));
+            String path = dataOutputPath + "/Question/qus_" + qid + ".txt";
+            try {
+                FileWriter fw = new FileWriter(path);
+                BufferedWriter bw = new BufferedWriter(fw);
+                bw.write(entry.getValue() + "\n");
+                bw.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -142,27 +161,24 @@ public class LDADataParser {
 
     }
 
-    public String tokenize(String body, List<String> sentence) {
+    public List<String> tokenize(String body) {
         String text = Jsoup.parse(StringEscapeUtils.unescapeHtml4(body)).text();
-//        Analyzer analyzer = new StandardAnalyzer(CharArraySet.EMPTY_SET);
-        Analyzer analyzer = new StandardAnalyzer();
+        Analyzer analyzer = new StandardAnalyzer(CharArraySet.EMPTY_SET);
+//        Analyzer analyzer = new StandardAnalyzer();
+        List<String> result = new ArrayList<String>();
         try {
             TokenStream tokenStream = analyzer.tokenStream("body", text);
             CharTermAttribute cattr = tokenStream.addAttribute(CharTermAttribute.class);
             tokenStream.reset();
             while(tokenStream.incrementToken()) {
                 String token = cattr.toString();
-                if(isEnglish(token)) {
-                    sentence.add(token);
-                } else {
-//                    System.out.println(token);
-                }
+                result.add(token);
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
 
-        return join(sentence.toArray());
+        return result;
     }
 
     boolean isEnglish(String string) {
@@ -187,11 +203,10 @@ public class LDADataParser {
     }
 
     public static void main(String[] args) {
-        String inputPath = "/Users/zhoutsby/Downloads/english.stackexchange.com/Posts.xml";
-        String outputPath = "/Users/zhoutsby/Downloads/english.stackexchange.com/result2/features";
+        String inputPath = "/Users/zhoutsby/Downloads/english.stackexchange.com/sample.xml";
+        String outputPath = "/Users/zhoutsby/Downloads/english.stackexchange.com/result2";
         LDADataParser parser = new LDADataParser(inputPath, outputPath);
         parser.parse();
         parser.dumps();
-        parser.dumpIDF();
     }
 }
