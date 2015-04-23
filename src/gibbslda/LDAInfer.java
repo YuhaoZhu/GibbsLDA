@@ -217,7 +217,8 @@ public class LDAInfer {
                 }
             }
         }
-
+        updatePara();
+        
         BufferedWriter writer = new BufferedWriter(new FileWriter(this.modelPath + "LDA.result"));
         for (int m = 0; m < M; m++) {
             writer.write(filenameList.get(m) + "\t");
