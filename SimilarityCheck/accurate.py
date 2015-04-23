@@ -51,7 +51,7 @@ def main(argv):
     linesize-=1
     print("Top One accuracy: "+str(TopNCorrectFindOne/total))
     print("Top N findOne accuracy: "+str(TopOneCorrect/total))
-    print("Top N accuracy with no base: "+str(TopNCorrect/total/linesize))
+    print("Top N accuracy with no base: "+str(TopNCorrect/total/(linesize-1)))
     print("Top N accuracy with base: "+str(TopNCorrectwithBase/total/linesize))
 
 
