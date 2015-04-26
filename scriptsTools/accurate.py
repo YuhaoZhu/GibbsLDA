@@ -27,7 +27,9 @@ def main(argv):
             TopOneCorrect+=1
     
         addOne=0
-        for i in range(2,len(splited)-1):
+        #change 11 to 21 or change 21 to 11
+        for i in range(2,11):
+#        for i in range(2,len(splited)-1):
             key=splited[0]
             ans=splited[i]
             newAns=ans.split('_')
@@ -39,7 +41,9 @@ def main(argv):
                     #if addOne==0:
                     #print(line)
         TopNCorrectFindOne+=addOne
-        for i in range(1,len(splited)-1):
+        #change 11 to 21 or change 21 to 11
+       for i in range(1,11):
+#        for i in range(1,len(splited)-1):
             key=splited[0]
             ans=splited[i]
             newAns=ans.split('_')
@@ -49,8 +53,8 @@ def main(argv):
         
         line=file.readline()
     linesize-=1
-    print("Top One accuracy: "+str(TopNCorrectFindOne/total))
-    print("Top N findOne accuracy: "+str(TopOneCorrect/total))
+    print("Find One in Top10: "+str(TopNCorrectFindOne/total))
+    print("Top One is right:  "+str(TopOneCorrect/total))
     print("Top N accuracy with no base: "+str(TopNCorrect/total/(linesize-1)))
     print("Top N accuracy with base: "+str(TopNCorrectwithBase/total/linesize))
 
