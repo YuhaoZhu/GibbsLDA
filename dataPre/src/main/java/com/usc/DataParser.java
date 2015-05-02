@@ -139,6 +139,34 @@ public class DataParser {
         dumps(newAns, dataOutputPath + "_answer.txt");
         dumps(newQus, dataOutputPath + "_question.txt");
 
+        Map<String, Integer> stats = new HashMap<String, Integer>();
+        for(Map.Entry<String, String> entry : relations.entrySet()) {
+            if(stats.containsKey(entry.getValue())) {
+                stats.put(entry.getValue(), stats.get(entry.getValue()) + 1);
+            } else {
+                stats.put(entry.getValue(), 1);
+            }
+        }
+
+        Integer count = 0;
+        Integer cnt_more_than_2 = 0;
+        HashMap<Integer, Integer> wordcnt = new HashMap<Integer, Integer>();
+        for(Map.Entry<String, Integer> entry : stats.entrySet()) {
+            count += entry.getValue();
+            if(entry.getValue() >= 2) {
+                cnt_more_than_2 += 1;
+            }
+            if(wordcnt.containsKey(entry.getValue())) {
+                wordcnt.put(entry.getValue(), wordcnt.get(entry.getValue()) + 1);
+            } else {
+                wordcnt.put(entry.getValue(), 1);
+            }
+        }
+        System.out.println();
+        System.out.println("Total cnt of answers: " + count + " \ntotal number of questions: " + stats.size());
+        System.out.println("Average Number of Answers: " + ((float) count) / stats.size());
+        System.out.println("Cnt more than 2: " + cnt_more_than_2);
+
         // write relationship
         try {
             FileWriter fw = new FileWriter(dataOutputPath + "_relation.txt");
@@ -150,6 +178,8 @@ public class DataParser {
         } catch (IOException e) {
             e.printStackTrace();
         }
+        dumpsMapping(newAnsMapping, dataOutputPath + "_answer_revert_mapping.txt");
+        dumpsMapping(newQusMapping, dataOutputPath + "_question_revert_mapping.txt");
     }
 
     /**
@@ -163,22 +193,60 @@ public class DataParser {
             BufferedWriter bw = new BufferedWriter(fw);
 
             int numDoc = docs.size();
+            Integer cnt = 0;
+            float sum = 0;
+            Map<Float, Set<String>> map = new HashMap<Float, Set<String>>();
             for(int i = 0; i < numDoc; i++) {
                 String key = String.valueOf(i + 1);
                 Map<String, Float> doc = docs.get(key);
                 List<String> line = new ArrayList<String>();
                 for(Map.Entry<String, Float> entry : doc.entrySet()) {
+                    Integer value = Math.round(entry.getValue());
+                    if(value < 0) {
+                        System.err.println(entry.getKey() + "in doc " + key + " is less than zero");
+                        continue;
+                    }
                     line.add(entry.getKey());
-                    line.add(String.valueOf(entry.getValue()));
+                    line.add(String.valueOf(value));
+
+                    // construct the order map
+                    if(map.containsKey(entry.getValue())) {
+                        map.get(entry.getValue()).add(entry.getKey());
+                    } else {
+                        Set<String> tmp = new HashSet<String>();
+                        tmp.add(entry.getKey());
+                        map.put(entry.getValue(), tmp);
+                    }
+
+                    sum += entry.getValue();
+                    cnt++;
                 }
                 String lineRes = join(line.toArray());
                 bw.write(lineRes + '\n');
             }
             bw.close();
+            System.out.println("\naverage tf-idf => " + (sum / cnt));
+            TopN topN = new TopN(10);
+            topN.find(map);
         } catch (IOException e) {
             e.printStackTrace();
         }
 
+    }
+
+    public void dumpsMapping(Map<String, Integer> mapping, String output) {
+        try {
+            FileWriter fw = new FileWriter(output);
+            BufferedWriter bw = new BufferedWriter(fw);
+
+            for(Map.Entry<String, Integer> entry : mapping.entrySet()) {
+                bw.write(entry.getValue() + " " + entry.getKey() + "\n");
+            }
+
+            bw.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -227,10 +295,10 @@ public class DataParser {
     }
 
     public static void main(String[] args) {
-        String inputPath = "/Users/zhoutsby/Downloads/english.stackexchange.com/test.xml";
-        String outputPath = "/Users/zhoutsby/Downloads/english.stackexchange.com/features_test";
-//        String inputPath = "/Users/zhoutsby/Downloads/english.stackexchange.com/Posts.xml";
-//        String outputPath = "/Users/zhoutsby/Downloads/english.stackexchange.com/features";
+//        String inputPath = "/Users/zhoutsby/Downloads/english.stackexchange.com/test.xml";
+//        String outputPath = "/Users/zhoutsby/Downloads/english.stackexchange.com/features_test";
+        String inputPath = "/Users/zhoutsby/Downloads/english.stackexchange.com/Posts.xml";
+        String outputPath = "/Users/zhoutsby/Downloads/english.stackexchange.com/features";
         DataParser parser = new DataParser(inputPath, outputPath);
         parser.parse();
 //        parser.dumps();

@@ -203,8 +203,8 @@ public class LDADataParser {
     }
 
     public static void main(String[] args) {
-        String inputPath = "/Users/zhoutsby/Downloads/english.stackexchange.com/sample.xml";
-        String outputPath = "/Users/zhoutsby/Downloads/english.stackexchange.com/result2";
+        String inputPath = "/Users/zhoutsby/Downloads/fitness.stackexchange.com/Posts.xml";
+        String outputPath = "/Users/zhoutsby/Downloads/fitness.stackexchange.com/result";
         LDADataParser parser = new LDADataParser(inputPath, outputPath);
         parser.parse();
         parser.dumps();
