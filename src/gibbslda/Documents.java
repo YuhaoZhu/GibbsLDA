@@ -51,6 +51,9 @@ public class Documents {
         
     }
     public void readTrainingDocuments(String trainingPath) throws IOException {
+        File newFiles=new File(trainingPath);
+        File[] fileList=newFiles.listFiles(new FileNameSelector("txt"));
+        Arrays.sort(fileList);
         for (File docPath : new File(trainingPath).listFiles(new FileNameSelector("txt"))) {
             filenameList.add(docPath.getName());
             Document doc = new Document(docPath.getAbsolutePath(), featureToIndexMap, featureCountsMap, indexToFeatureMap);
